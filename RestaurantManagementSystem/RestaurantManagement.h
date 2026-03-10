@@ -122,7 +122,7 @@ void PrintBillById(Bill* ListBill);
 void AssignTable(Table* TableList);
 int GetValidChoice();
 int MenuValidChoice();
-void GetValidWord(char* Output, const char* PromptMessage);
+void GetValidWord(char* Output, size_t OutputSize, const char* PromptMessage);
 int GetValidNumber(const char* PromptMessage);
 int GetValidNumberInRange(int MaxValue, const char* PromptMessage);
 float GetValidPrice(const char* PromptMessage);

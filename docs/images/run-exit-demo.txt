@@ -1,0 +1,18 @@
+Enter number of tables in the restaurant: Menu item 'Burger' added.
+Menu item 'Pizza' added.
+Menu item 'Salad' added.
+Menu item 'Soda' added.
+Menu item 'Fries' added.
+Menu item 'Hot Dog' added.
+--- Restaurant Management System ---
+1. Assign a Table to Customer
+2. Create a New Order
+3. Process Next Pending Order
+4. Generate Bill & Release Table
+5. Manage Menu Items
+6. View Bill by ID
+7. Show All Menu Items
+8. Show All Orders
+9. Show Table Statuses
+0. Exit Application
+Enter your choice: Exiting system. Cleaning up...

@@ -75,14 +75,13 @@ int main(void) {
 
 void Cleanup(Table* TableList, MenuItem** MenuTable, Order** ListOrder, OrderQueue* QueueOrder, Bill** ListBill) {
 	if (TableList) {
-		Table* Head = TableList;
-		Table* Current = Head->Next;
-		Head->Next = NULL;
-		while (Head) {
+		Table* Current = TableList->Next;
+		while (Current != TableList) {
 			Table* NextTable = Current->Next;
 			free(Current);
 			Current = NextTable;
 		}
+		free(TableList);
 	}
 
 	for (int Count = 0; Count < HASH_SIZE; Count++) {
@@ -101,11 +100,9 @@ void Cleanup(Table* TableList, MenuItem** MenuTable, Order** ListOrder, OrderQue
 		free(OrderPtr);
 		OrderPtr = NextOrder;
 	}
-
-	while (QueueOrder->Front) {
-		Order* DequeuedOrder = DequeueOrder(QueueOrder);
-		free(DequeuedOrder);
-	}
+	*ListOrder = NULL;
+	QueueOrder->Front = NULL;
+	QueueOrder->Back = NULL;
 
 	Bill* BillPtr = *ListBill;
 	while (BillPtr) {
@@ -119,6 +116,7 @@ void Cleanup(Table* TableList, MenuItem** MenuTable, Order** ListOrder, OrderQue
 		free(BillPtr);
 		BillPtr = NextBill;
 	}
+	*ListBill = NULL;
 }
 
 int Hash(const char* InputName) {
@@ -432,7 +430,7 @@ MenuItem* GetValidMenuItem(MenuItem** MenuTable, const char* PromptMessage) {
 	MenuItem* FoundItem;
 
 	do {
-		GetValidWord(ItemName, PromptMessage);
+		GetValidWord(ItemName, sizeof(ItemName), PromptMessage);
 		TrimNewline(ItemName);
 		FoundItem = LookupMenuItem(MenuTable, ItemName);
 
@@ -505,7 +503,13 @@ void TakeOrder(MenuItem** MenuTable, Order** ListOrder, OrderQueue* QueueOrder, 
 			continue;
 		}
 
-		int Quantity = GetValidNumber("Quantity: ");
+		int Quantity = 0;
+		do {
+			Quantity = GetValidNumber("Quantity: ");
+			if (Quantity <= 0) {
+				printf("Quantity must be greater than 0.\n");
+			}
+		} while (Quantity <= 0);
 
 		int ItemIndex = NewOrder->ItemCount++;
 		NewOrder->Items[ItemIndex] = MenuItemFound;
@@ -569,12 +573,42 @@ void ProcessNextOrder(OrderQueue* QueueOrder) {
 
 void GenerateBill(Order** ListOrder, Bill** ListBill, int* NextBillID, Table* TableList) {
 	int TableNumber = GetValidNumber("Enter table number to generate bill: ");
+	int HasProcessedOrder = 0;
+	int HasAnyOrderForTable = 0;
+	int TableExists = 0;
+
+	if (TableList) {
+		Table* CurrentTable = TableList;
+		do {
+			if (CurrentTable->TableNumber == TableNumber) {
+				TableExists = 1;
+				break;
+			}
+			CurrentTable = CurrentTable->Next;
+		} while (CurrentTable != TableList);
+	}
+
+	if (!TableExists) {
+		printf("Table %d does not exist.\n", TableNumber);
+		return;
+	}
 
 	for (Order* CurrentOrder = *ListOrder; CurrentOrder; CurrentOrder = CurrentOrder->Next) {
-		if (CurrentOrder->TableNumber == TableNumber && CurrentOrder->Status == ORDER_PENDING) {
-			printf("Please process all orders before billing.\n");
-			return;
+		if (CurrentOrder->TableNumber == TableNumber) {
+			HasAnyOrderForTable = 1;
+			if (CurrentOrder->Status == ORDER_PENDING) {
+				printf("Please process all orders before billing.\n");
+				return;
+			}
+			if (CurrentOrder->Status == ORDER_DONE) {
+				HasProcessedOrder = 1;
+			}
 		}
+	}
+
+	if (!HasAnyOrderForTable || !HasProcessedOrder) {
+		printf("No completed orders found for table %d.\n", TableNumber);
+		return;
 	}
 
 	Bill* NewBill = (Bill*)malloc(sizeof(Bill));
@@ -705,14 +739,14 @@ void ManageMenuItems(MenuItem** MenuTable) {
 		switch ((ManageMenuOption)UserChoice) {
 		case ITEM_ADD:
 			ItemId = GetValidNumber("Enter Menu Item ID: ");
-			GetValidWord(ItemName, "Enter Menu Item Name: ");
+			GetValidWord(ItemName, sizeof(ItemName), "Enter Menu Item Name: ");
 			TrimNewline(ItemName);
 			ItemPrice = GetValidPrice("Enter Price: ");
 			InsertMenuItem(MenuTable, ItemId, ItemName, ItemPrice);
 			break;
 
 		case ITEM_LOOKUP:
-			GetValidWord(ItemName, "Enter Menu Item Name to lookup: ");
+			GetValidWord(ItemName, sizeof(ItemName), "Enter Menu Item Name to lookup: ");
 			TrimNewline(ItemName);
 			{
 				MenuItem* FoundItem = LookupMenuItem(MenuTable, ItemName);
@@ -727,7 +761,7 @@ void ManageMenuItems(MenuItem** MenuTable) {
 			break;
 
 		case ITEM_DELETE:
-			GetValidWord(ItemName, "Enter Menu Item Name to delete: ");
+			GetValidWord(ItemName, sizeof(ItemName), "Enter Menu Item Name to delete: ");
 			TrimNewline(ItemName);
 			DeleteMenuItem(MenuTable, ItemName);
 			break;
@@ -803,12 +837,16 @@ int MenuValidChoice() {
 	return 0;
 }
 
-void GetValidWord(char* InputWord, const char* PromptMessage) {
+void GetValidWord(char* InputWord, size_t InputWordSize, const char* PromptMessage) {
 	int ValidWord;
 	do {
 		ValidWord = 1;
 		printf("%s", PromptMessage);
-		fgets(InputWord, MAX_ITEM_LENGTH, stdin);
+		if (fgets(InputWord, (int)InputWordSize, stdin) == NULL) {
+			printf("\nINVALID INPUT! Please try again.\n");
+			ValidWord = 0;
+			continue;
+		}
 
 		InputWord[strcspn(InputWord, "\n")] = '\0';
 

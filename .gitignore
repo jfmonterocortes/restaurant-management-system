@@ -53,3 +53,20 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Visual Studio and local workspace files
+.vs/
+*.VC.db
+*.VC.opendb
+*.suo
+*.user
+*.ipch
+
+# Visual Studio build outputs
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.tlog
+*.lastbuildstate
+*.recipe
