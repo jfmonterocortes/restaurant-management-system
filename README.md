@@ -49,11 +49,16 @@ Console Client -> Business Logic Modules -> In-Memory Data Structures
 ## Visual Demonstration
 This is a console-first project. The following artifacts were captured by running the compiled executable with scripted inputs:
 
-- [Startup and graceful exit](docs/images/run-exit-demo.txt)
-- [Validation: non-numeric table input](docs/images/run-validation-text-input.txt)
-- [Validation: minimum table count enforcement](docs/images/run-validation-table-count.txt)
+- Startup and graceful exit:
+![Startup and graceful exit](docs/images/screenshot-main-menu.png)
 
-You can replace these with manual screenshots from a local interactive run in Visual Studio.
+- Validation: non-numeric table input:
+![Validation: non-numeric table input](docs/images/screenshot-invalid-text-input.png)
+
+- Validation: minimum table count enforcement:
+![Validation: minimum table count enforcement](docs/images/screenshot-invalid-range-input.png)
+
+Raw text logs are also available in `docs/images/*.txt`.
 
 ## Why This Project Stands Out
 - Demonstrates deliberate use of multiple core data structures in one coherent workflow.
